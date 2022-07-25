@@ -4,24 +4,30 @@ import axios from 'axios';
 function App() {
 	const [addr, setAddr] = useState("");
 	const [addrBalance, setAddrBalance] = useState("");
-	const [display, setDisplay] = useState(null);
+	const [displayOne, setDisplayOne] = useState(null);
+	const [displayTwo, setDisplayTwo] = useState(null);
 	
 	const [axiosRes, setAxiosRes] = useState(null);
+	const [axiosResGetWallet, setAxiosResGetWallet] = useState(null);
 	
 	// i have to use this hook because if i just put it inside the function
 	// it doesnt update.
+
 	useEffect(() => {
-		setDisplay(balanceResponse);
+		setDisplayOne(balanceResponse);
 	}, [axiosRes])
+
+	useEffect(() => {
+		setDisplayTwo(() => {return (axiosResGetWallet == null ? null : JSON.stringify(axiosResGetWallet.data))});
+	}, [axiosResGetWallet])
 	
 	async function buttonPress() {
-		console.log("hello");
 		let res;
 		try { 
 			res = await axios.post('http://localhost:443/gettokenbalance',
 			{'address': addr});
 		} catch {
-			setDisplay("invalid address / request failed")
+			setDisplayOne("invalid address / request failed")
 			return;
 		}
 		console.log(res.data);
@@ -31,19 +37,46 @@ function App() {
 		//setDisplay(balanceResponse);
 	}
 	
+	async function generateWallet() {
+		let res;
+		try { 
+			res = await axios.get('http://localhost:443/generatewallet');
+		} catch {
+			setDisplayTwo("invalid address / request failed")
+			return;
+		}
+		console.log(res.data);
+		setAxiosResGetWallet(res);
+	}
+	
 	function balanceResponse() {
 		return axiosRes == null ? null : `user ${addr} has ${axiosRes.data} tokens$`;
 		//return axiosRes == null ? null : `user ${addr} has ${addrBalance} tokens$`;
+		//return `user ${addr} has ${addrBalance} tokens$`;
 	}
 	
 	return (
 		<div className="App">
 			Learning React
 			<br/>
-			<input type = "text" name = "inputtext" onChange = {(x) => {setAddr(x.target.value)}}/>
-			<input type = "button" value = "hello" onClick = {buttonPress}/>
+			It will say CORS request did not succeed if you do not open the 
+			api at localhost:443
 			<br/>
-			{display}
+			<table><tbody>
+				<tr>
+					<td>
+						<input type = "text" name = "inputtext" onChange = {(x) => {setAddr(x.target.value)}}/>
+						<input type = "button" value = "query token balance" onClick = {buttonPress}/>
+						<br/>
+						{displayOne}
+					</td>
+					<td>
+						<a href = "https://testnet.binance.org/faucet-smart">binance testnet faucet</a>
+						<input type = "button" value = "generate my wallet" onClick = {generateWallet}/>
+						{displayTwo}
+					</td>
+				</tr>
+			</tbody></table>
 		</div>
 	);
 }
